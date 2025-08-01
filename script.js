@@ -20,8 +20,23 @@ const renderSpreadSheet = () => {
 
   $head.innerHTML = headerHTML;
 
-  const bodyHTML = `<tr>
+  const bodyHTML = range(ROWS)
+    .map((row) => {
+      return `<tr>
+        <td>${row + 1}</td>
+        ${range(COLUMNS)
+          .map(
+            (column) => `
+          <td data-x="${column}" data-y="${row}">
+            <span></span>
+            <input type="text" value=""/>
+          </td>
+          `
+          )
+          .join('')}  
     </tr>`;
+    })
+    .join('');
 
   $body.innerHTML = bodyHTML;
 };

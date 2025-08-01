@@ -2,7 +2,40 @@ body {
   font-family: Arial, sans-serif;
 }
 
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
 img {
   max-width: 50px;
   height: auto;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+thead,
+tr td:first-child {
+  background: #eae6e6;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  font-weight: normal;
+  font-size: 12px;
+  text-align: center;
+  width: 64px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+input {
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  width: 100%;
 }
