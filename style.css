@@ -31,6 +31,17 @@ td {
   width: 64px;
   height: 20px;
   vertical-align: middle;
+  position: relative;
+}
+
+span,
+input {
+  position: absolute;
+  inset: 0;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 input {
@@ -38,4 +49,10 @@ input {
   opacity: 0;
   pointer-events: none;
   width: 100%;
+  border-radius: 2px;
+
+  &:focus {
+    opacity: 1;
+    outline: 2px solid #09f;
+  }
 }
