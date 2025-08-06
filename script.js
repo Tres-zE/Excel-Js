@@ -21,13 +21,27 @@ function updateCell({ x, y, value }) {
 
   const cell = newState[x][y]; //obtiene la celda específica que se va a actualizar
 
-  const computedValue = Number(value);
-  cell.computedValue = computedValue; //actualiza el valor computado de la celda -> span
+  cell.computedValue = computeValue(value); //actualiza el valor computado de la celda -> span
   cell.value = value; //actualiza el valor de la celda -> input
 
   newState[x][y] = cell; //asigna el objeto actualizado a la celda correspondiente en el nuevo estado
   STATE = newState; //actualiza el estado global con el nuevo estado
   renderSpreadSheet(); //vuelve a renderizar la hoja de cálculo para reflejar los cambios
+}
+
+function computeValue(value) {
+  if (!value.startsWith('=')) return value; //si el valor no empieza con '=', devuelve el valor original
+
+  const formula = value.slice(1); //elimina el '=' del inicio del valor
+
+  let computedValue;
+  try {
+    computedValue = eval(formula); //evalúa la expresión matemática contenida en la fórmula
+  } catch (e) {
+    console.error('Error al evaluar la fórmula:', e);
+    computedValue = `!Error: ${e.message}`; //si hay un error al evaluar, devuelve 'Error'
+  }
+  return computedValue; //devuelve el valor computado
 }
 
 const renderSpreadSheet = () => {
