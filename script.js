@@ -18,10 +18,11 @@ let STATE = range(COLUMNS).map((i) =>
 
 function updateCell({ x, y, value }) {
   const newState = structuredClone(STATE); //clona el estado actual para no mutarlo directamente
+  const constants = generateCellsConstants(newState); //genera las constantes para las celdas actuales
 
   const cell = newState[x][y]; //obtiene la celda específica que se va a actualizar
 
-  cell.computedValue = computeValue(value); //actualiza el valor computado de la celda -> span
+  cell.computedValue = computeValue(value, constants); //actualiza el valor computado de la celda -> span
   cell.value = value; //actualiza el valor de la celda -> input
 
   newState[x][y] = cell; //asigna el objeto actualizado a la celda correspondiente en el nuevo estado
@@ -29,16 +30,34 @@ function updateCell({ x, y, value }) {
   renderSpreadSheet(); //vuelve a renderizar la hoja de cálculo para reflejar los cambios
 }
 
-function computeValue(value) {
+function generateCellsConstants(cells) {
+  return cells
+    .map((rows, x) => {
+      return rows
+        .map((cell, y) => {
+          const letter = getColumn(x); //obtiene la letra de la columna
+          const cellId = `${letter}${y + 1}`; //genera el ID de la celda en formato 'A1', 'B2', etc.
+          return `const ${cellId} = ${cell.computedValue};`;
+          // genera una constante para cada celda con su valor computado
+        })
+        .join('\n'); //une todas las constantes en una sola cadena separada por saltos de línea
+    })
+    .join('\n'); //une todas las filas en una sola cadena separada por saltos de línea
+}
+
+function computeValue(value, constants) {
   if (!value.startsWith('=')) return value; //si el valor no empieza con '=', devuelve el valor original
 
   const formula = value.slice(1); //elimina el '=' del inicio del valor
 
   let computedValue;
   try {
-    computedValue = eval(formula); //evalúa la expresión matemática contenida en la fórmula
+    computedValue = eval(`(()=>{
+      ${constants}
+      return ${formula};
+      })()`); // evalúa la fórmula dentro de una función anónima para evitar conflictos con el ámbito global
+    // eval() ejecuta el código JavaScript representado por la cadena de texto
   } catch (e) {
-    console.error('Error al evaluar la fórmula:', e);
     computedValue = `!Error: ${e.message}`; //si hay un error al evaluar, devuelve 'Error'
   }
   return computedValue; //devuelve el valor computado
