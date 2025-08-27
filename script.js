@@ -1,13 +1,16 @@
 const $ = (el) => document.querySelector(el); //para seleccionar un elemento
 const $$ = (el) => document.querySelectorAll(el); //para seleccionar varios elementos
 
-const $table = $("table");
-const $head = $("thead");
-const $body = $("tbody");
+const $table = $('table');
+const $head = $('thead');
+const $body = $('tbody');
 
 const ROWS = 10; //número de filas
 const COLUMNS = 3; //número de columnas
 const FIRST_CHAR_CODE = 65; //código ASCII de la letra 'A'
+
+let selectedColumn = null; //columna seleccionada (inicialmente nula)
+let selectedRow = null; //fila seleccionada (inicialmente nula)
 
 const range = (length) => Array.from({ length }, (_, i) => i); //crea un array de longitud 'length' con índices del 0 al length-1
 const getColumn = (i) => String.fromCharCode(FIRST_CHAR_CODE + i); //convierte un índice a su correspondiente letra de columna (A, B, C, ...)
@@ -47,9 +50,9 @@ function generateCellsConstants(cells) {
           return `const ${cellId} = ${cell.computedValue};`;
           // genera una constante para cada celda con su valor computado
         })
-        .join("\n"); //une todas las constantes en una sola cadena separada por saltos de línea
+        .join('\n'); //une todas las constantes en una sola cadena separada por saltos de línea
     })
-    .join("\n"); //une todas las filas en una sola cadena separada por saltos de línea
+    .join('\n'); //une todas las filas en una sola cadena separada por saltos de línea
 }
 
 function computeAllCells(cells, constants) {
@@ -63,9 +66,9 @@ function computeAllCells(cells, constants) {
 }
 
 function computeValue(value, constants) {
-  if (typeof value === "number") return value;
+  if (typeof value === 'number') return value;
   //si el valor es un número, devuelve el valor original
-  if (!value.startsWith("=")) return value;
+  if (!value.startsWith('=')) return value;
   //si el valor no empieza con '=', devuelve el valor original
 
   const formula = value.slice(1); //elimina el '=' del inicio del valor
@@ -89,7 +92,7 @@ const renderSpreadSheet = () => {
         <th></th> 
         ${range(COLUMNS)
           .map((i) => `<th>${getColumn(i)}</th>`)
-          .join("")}
+          .join('')}
     </tr>`;
 
   $head.innerHTML = headerHTML;
@@ -107,37 +110,65 @@ const renderSpreadSheet = () => {
           </td>
           `
           )
-          .join("")}  
+          .join('')}  
     </tr>`;
     })
-    .join("");
+    .join('');
 
   $body.innerHTML = bodyHTML;
 };
 
-$body.addEventListener("click", (event) => {
-  const td = event.target.closest("td"); //busca el elemento td más cercano al evento
+$body.addEventListener('click', (event) => {
+  const td = event.target.closest('td'); //busca el elemento td más cercano al evento
   if (!td) return; //si no hay td, sale de la función
 
   const { x, y } = td.dataset; //obtiene las coordenadas de la celda desde los atributos data-x y data-y
-  const input = td.querySelector("input"); //selecciona el input dentro del td
-  const span = td.querySelector("span"); //selecciona el span dentro del td
+  const input = td.querySelector('input'); //selecciona el input dentro del td
+  const span = td.querySelector('span'); //selecciona el span dentro del td
 
   const end = input.value.length; //obtiene la longitud del valor del input
   input.setSelectionRange(end, end); //establece el rango de selección del input para que el cursor esté al final del texto
   input.focus(); //enfoca el input
 
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") input.blur(); //si se presiona Enter, se pierde el foco del input
-    if (event.key === "Escape") input.value = STATE[x][y].value; //si se presiona Escape, se restablece el valor del input al valor original de la celda
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') input.blur(); //si se presiona Enter, se pierde el foco del input
+    if (event.key === 'Escape') input.value = STATE[x][y].value; //si se presiona Escape, se restablece el valor del input al valor original de la celda
   });
 
-  input.addEventListener("blur", () => {
+  input.addEventListener('blur', () => {
     console.log({ value: input.value, state: STATE[x][y].value });
     if (input.value === STATE[x][y].value) return; //si el valor del input es igual al valor actual de la celda, no hace nada
     updateCell({ x, y, value: input.value }); //actualiza la celda con el nuevo valor
   }),
     { once: true }; //el evento blur se ejecuta una sola vez
+});
+
+$head.addEventListener('click', (event) => {
+  const th = event.target.closest('th'); //busca el elemento th más cercano al evento
+  if (!th) return; //si no hay th, sale de la función
+
+  const x = [...th.parentNode.children].indexOf(th);
+  //obtiene el índice de la columna (resta 1 para ignorar la primera celda vacía)
+  if (x < 0) return;
+  //si el índice es menor que 0, sale de la función (esto evita seleccionar la celda vacía)
+
+  selectedColumn = x - 1; //actualiza la columna seleccionada
+
+  $$('.selected').forEach((el) => el.classList.remove('selected'));
+  //elimina la clase 'selected' de todas las celdas que la tienen
+  th.classList.add('selected');
+  //añade la clase 'selected' al encabezado de la columna seleccionada
+  $$(`tr td:nth-child(${x + 1})`).forEach((el) => el.classList.add('selected'));
+  //añade la clase 'selected' a todas las celdas de la columna seleccionada
+}); // Maneja el evento de clic en el encabezado para seleccionar una columna
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Backspace' && selectedColumn !== null) {
+    times(ROWS).forEach((row) => {
+      updateCell({ x: selectedColumn, y: row, value: '' });
+    });
+    //renderSpreadSheet();
+  }
 });
 
 renderSpreadSheet(); // Inicializa la hoja de cálculo
